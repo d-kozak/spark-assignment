@@ -18,6 +18,7 @@ val allTasks = tasks(
     Task(4, "Discretizing", discretizing),
     Task(5, "Probabilistic Analysis", probabilistic),
     Task(9, "Normalization", normalization),
+    Task(10, "Remove noise", removeNoise),
     Task(12, "Pivot table", pivotTable)
 )
 
