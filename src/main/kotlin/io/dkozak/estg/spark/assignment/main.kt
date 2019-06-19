@@ -1,6 +1,7 @@
 package io.dkozak.estg.spark.assignment
 
 import io.dkozak.estg.spark.assignment.tasks.lookupCollection
+import io.dkozak.estg.spark.assignment.tasks.oversampling
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
@@ -10,11 +11,14 @@ import java.io.File
 
 const val LOG_FILE_NAME = "log"
 
-typealias AssignmentTask = (dataset: Dataset<Row>, outputDir: String, log: (String) -> Unit) -> Unit
 
-val allTasks = listOf(lookupCollection)
+val allTasks = tasks(
+    Task(1, "Lookup Collection", lookupCollection),
+    Task(2, "Oversampling", oversampling)
+)
 
-fun handleArguments(args: Array<String>): Triple<String, String, List<AssignmentTask>> {
+
+fun handleArguments(args: Array<String>): Triple<String, String, Map<Int, Task>> {
     fun fail(message: String): Nothing = throw IllegalArgumentException(message)
     (args.size < 2 || args.size > 3) && fail("Expecting arguments: input_csv_file output_directory [task_number]")
     val inputFile = File(args[0])
@@ -27,9 +31,9 @@ fun handleArguments(args: Array<String>): Triple<String, String, List<Assignment
     }
     return if (args.size == 2) Triple(args[0], args[1], allTasks)
     else {
-        val task = args[2].toIntOrNull() ?: fail("${args[2]} is not an integer")
-        (task < 1 || task > 12) && fail("$task should be between 1 and 12")
-        Triple(args[0], args[1], allTasks.subList(task - 1, task))
+        val taskId = args[2].toIntOrNull() ?: fail("${args[2]} is not an integer")
+        val task = allTasks[taskId] ?: fail("Task with id $taskId not found")
+        Triple(args[0], args[1], mapOf(taskId to task))
     }
 }
 
@@ -43,8 +47,6 @@ fun sparkExecute(block: (SparkSession) -> Unit) {
     }
 }
 
-fun BufferedWriter.println(text: Any) = this.write("$text\n")
-
 fun prepareOutput(outputDir: String, block: (BufferedWriter) -> Unit) =
     File("$outputDir/$LOG_FILE_NAME").bufferedWriter().use(block)
 
@@ -56,15 +58,17 @@ fun Dataset<*>.writeCsv(name: String) = this.coalesce(1)
 fun main(args: Array<String>) {
     val (inputFile, outputDir, tasks) = handleArguments(args)
     sparkExecute { spark ->
-        prepareOutput(outputDir) { logger ->
+        prepareOutput(outputDir) { writer ->
+            val logger = Logger(writer)
             val dataset = spark.loadCsv(inputFile)
-            for ((index, task) in tasks.withIndex()) {
-                val taskOutputDir = "$outputDir/${index + 1}"
+            for ((index, task) in tasks) {
+                val taskOutputDir = "$outputDir/$index"
                 File(taskOutputDir).mkdir() || throw RuntimeException("Could not create output dir $taskOutputDir")
-                task(dataset, taskOutputDir, logger::println)
+                logger.section(task.name) {
+                    task.code(dataset, taskOutputDir, logger)
+                }
             }
         }
-
     }
 }
 

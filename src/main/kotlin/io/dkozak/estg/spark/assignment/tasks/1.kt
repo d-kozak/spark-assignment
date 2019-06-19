@@ -1,6 +1,7 @@
 package io.dkozak.estg.spark.assignment.tasks
 
-import io.dkozak.estg.spark.assignment.AssignmentTask
+
+import io.dkozak.estg.spark.assignment.TaskCode
 import io.dkozak.estg.spark.assignment.writeCsv
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.Dataset
@@ -8,13 +9,15 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions.`when`
 import org.apache.spark.sql.functions.monotonically_increasing_id
 
-val lookupCollection: AssignmentTask = { dataset, outputDir, log ->
+val lookupCollection: TaskCode = { dataset, outputDir, logger ->
     val companies = prepareCompanyDataset(dataset, outputDir)
         .collectAsList()
         .map { it.getString(0) }
         .mapIndexed { i, company ->
             company to i
         }.toMap()
+
+    logger.log("Companies: $companies")
 
     val companyColumn = dataset.col("company")
     var whenColumn: Column? = null
