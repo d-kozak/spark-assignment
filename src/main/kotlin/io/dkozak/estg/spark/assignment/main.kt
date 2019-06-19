@@ -48,6 +48,10 @@ fun BufferedWriter.println(text: Any) = this.write("$text\n")
 fun prepareOutput(outputDir: String, block: (BufferedWriter) -> Unit) =
     File("$outputDir/$LOG_FILE_NAME").bufferedWriter().use(block)
 
+fun Dataset<*>.writeCsv(name: String) = this.coalesce(1)
+    .write()
+    .option("header", true)
+    .csv(name)
 
 fun main(args: Array<String>) {
     val (inputFile, outputDir, tasks) = handleArguments(args)

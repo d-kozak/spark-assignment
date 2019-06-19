@@ -1,20 +1,16 @@
 package io.dkozak.estg.spark.assignment.tasks
 
 import io.dkozak.estg.spark.assignment.AssignmentTask
+import io.dkozak.estg.spark.assignment.writeCsv
 import org.apache.spark.sql.Column
+import org.apache.spark.sql.Dataset
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions.`when`
+import org.apache.spark.sql.functions.monotonically_increasing_id
 
 val lookupCollection: AssignmentTask = { dataset, outputDir, log ->
-    val companyDataset = dataset.select("company")
-        .distinct()
-        .coalesce(1)
-    companyDataset.write()
-        .option("header", true)
-        .csv("$outputDir/lookup")
-
-    val companies = companyDataset
+    val companies = prepareCompanyDataset(dataset, outputDir)
         .collectAsList()
-
         .map { it.getString(0) }
         .mapIndexed { i, company ->
             company to i
@@ -23,17 +19,26 @@ val lookupCollection: AssignmentTask = { dataset, outputDir, log ->
     val companyColumn = dataset.col("company")
     var whenColumn: Column? = null
     for ((company, id) in companies) {
-        if (whenColumn == null) {
-            whenColumn = `when`(companyColumn.equalTo(company), id)
+        whenColumn = if (whenColumn == null) {
+            `when`(companyColumn.equalTo(company), id)
         } else {
-            whenColumn = whenColumn.`when`(companyColumn.equalTo(company), id)
+            whenColumn.`when`(companyColumn.equalTo(company), id)
         }
     }
-    whenColumn!!.otherwise("fooo")
 
-    dataset.withColumn(
-        "company", whenColumn
-    ).coalesce(1)
-        .write()
-        .option("header", true).csv("$outputDir/reviews")
+    dataset.withColumn("company", whenColumn)
+        .writeCsv("$outputDir/reviews")
+}
+
+private fun prepareCompanyDataset(
+    dataset: Dataset<Row>,
+    outputDir: String
+): Dataset<Row> {
+    val companyDataset = dataset.select("company")
+        .distinct()
+        .coalesce(1)
+    companyDataset
+        .withColumn("id", monotonically_increasing_id())
+        .writeCsv("$outputDir/lookup")
+    return companyDataset
 }
