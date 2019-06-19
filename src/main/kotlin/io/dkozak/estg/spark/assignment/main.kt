@@ -2,6 +2,7 @@ package io.dkozak.estg.spark.assignment
 
 import io.dkozak.estg.spark.assignment.tasks.lookupCollection
 import org.apache.spark.sql.Dataset
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
 import java.io.BufferedWriter
 import java.io.File
@@ -9,8 +10,9 @@ import java.io.File
 
 const val LOG_FILE_NAME = "log"
 
-val allTasks = listOf(lookupCollection)
+typealias AssignmentTask = (dataset: Dataset<Row>, outputDir: String, log: (String) -> Unit) -> Unit
 
+val allTasks = listOf(lookupCollection)
 
 fun handleArguments(args: Array<String>): Triple<String, String, List<AssignmentTask>> {
     fun fail(message: String): Nothing = throw IllegalArgumentException(message)
@@ -47,17 +49,27 @@ fun BufferedWriter.println(text: String) = this.write("$text\n")
 fun prepareOutput(outputDir: String, block: (BufferedWriter) -> Unit) =
     File("$outputDir/$LOG_FILE_NAME").bufferedWriter().use(block)
 
-typealias AssignmentTask = (dataset: Dataset<String>, outputDir: String, log: (String) -> Unit) -> Unit
 
 fun main(args: Array<String>) {
     val (inputFile, outputDir, tasks) = handleArguments(args)
     sparkExecute { spark ->
         prepareOutput(outputDir) { logger ->
-            val dataset = spark.read().textFile(inputFile).cache()
+            val dataset = spark.loadCsv(inputFile)
             for (task in tasks) {
                 task(dataset, outputDir, logger::println)
             }
         }
 
     }
+}
+
+fun SparkSession.loadCsv(
+    inputFile: String,
+    header: Boolean = true
+): Dataset<Row> {
+    return this.read()
+        .format("csv")
+        .option("header", header)
+        .load(inputFile)
+        .cache()
 }
