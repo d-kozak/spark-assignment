@@ -1,4 +1,4 @@
-results.out
+output/*
 
 # Compiled class file
 *.class
