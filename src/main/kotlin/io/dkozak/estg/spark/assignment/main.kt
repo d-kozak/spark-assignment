@@ -64,7 +64,7 @@ fun main(args: Array<String>) {
             for ((index, task) in tasks) {
                 val taskOutputDir = "$outputDir/$index"
                 File(taskOutputDir).mkdir() || throw RuntimeException("Could not create output dir $taskOutputDir")
-                logger.section(task.name) {
+                logger.task(task.name) {
                     task.code(dataset, taskOutputDir, logger)
                 }
             }

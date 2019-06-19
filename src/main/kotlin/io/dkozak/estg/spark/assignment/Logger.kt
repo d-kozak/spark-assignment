@@ -7,17 +7,30 @@ class Logger(
     private val writer: BufferedWriter
 ) {
 
-    private val sectionStack = LinkedList<String>()
+    private val nameStack = LinkedList<String>()
 
-    fun section(name: String, block: Logger.() -> Unit) {
-        log("# Starting section $name")
+    fun task(name: String, block: Logger.() -> Unit) {
+        newLine()
+        log("# Starting task $name")
+        nameStack.add(name)
         try {
             block()
         } finally {
-            log("# Finishing section $name\n")
+            nameStack.removeLast()
+            log("# Finishing task $name")
+            newLine()
         }
     }
 
-    fun log(message: String) = writer.write("$message\n")
+    private fun newLine() {
+        writer.write("\n")
+        println()
+    }
+
+    fun log(message: String) {
+        val indent = nameStack.map { '\t' }.joinToString()
+        writer.write("$indent$message\n")
+        println("$indent$message")
+    }
 
 }
