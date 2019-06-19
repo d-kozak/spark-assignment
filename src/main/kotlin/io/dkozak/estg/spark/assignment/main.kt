@@ -2,6 +2,7 @@ package io.dkozak.estg.spark.assignment
 
 import io.dkozak.estg.spark.assignment.tasks.lookupCollection
 import io.dkozak.estg.spark.assignment.tasks.oversampling
+import io.dkozak.estg.spark.assignment.tasks.undersampling
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
@@ -14,7 +15,8 @@ const val LOG_FILE_NAME = "log"
 
 val allTasks = tasks(
     Task(1, "Lookup Collection", lookupCollection),
-    Task(2, "Oversampling", oversampling)
+    Task(2, "Oversampling", oversampling),
+    Task(3, "Undersampling", undersampling)
 )
 
 
