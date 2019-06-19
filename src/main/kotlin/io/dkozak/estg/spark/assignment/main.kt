@@ -16,8 +16,7 @@ val allTasks = listOf(lookupCollection)
 
 fun handleArguments(args: Array<String>): Triple<String, String, List<AssignmentTask>> {
     fun fail(message: String): Nothing = throw IllegalArgumentException(message)
-
-    args.size < 2 || args.size > 3 && fail("Args: input_csv_file output_directory [task_number]")
+    (args.size < 2 || args.size > 3) && fail("Expecting arguments: input_csv_file output_directory [task_number]")
     val inputFile = File(args[0])
     inputFile.exists() || fail("File ${args[0]} does not exist")
     val outputDir = File(args[1])
@@ -44,7 +43,7 @@ fun sparkExecute(block: (SparkSession) -> Unit) {
     }
 }
 
-fun BufferedWriter.println(text: String) = this.write("$text\n")
+fun BufferedWriter.println(text: Any) = this.write("$text\n")
 
 fun prepareOutput(outputDir: String, block: (BufferedWriter) -> Unit) =
     File("$outputDir/$LOG_FILE_NAME").bufferedWriter().use(block)
@@ -55,8 +54,10 @@ fun main(args: Array<String>) {
     sparkExecute { spark ->
         prepareOutput(outputDir) { logger ->
             val dataset = spark.loadCsv(inputFile)
-            for (task in tasks) {
-                task(dataset, outputDir, logger::println)
+            for ((index, task) in tasks.withIndex()) {
+                val taskOutputDir = "$outputDir/${index + 1}"
+                File(taskOutputDir).mkdir() || throw RuntimeException("Could not create output dir $taskOutputDir")
+                task(dataset, taskOutputDir, logger::println)
             }
         }
 
