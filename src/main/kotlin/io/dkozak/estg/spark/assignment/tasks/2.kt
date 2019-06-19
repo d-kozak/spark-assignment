@@ -4,7 +4,7 @@ import io.dkozak.estg.spark.assignment.TaskCode
 import io.dkozak.estg.spark.assignment.writeCsv
 import org.apache.spark.sql.functions.desc
 
-val oversampling: TaskCode = { dataset, outputDir, logger ->
+val oversampling: TaskCode = { dataset, outputDir, _, logger ->
     val reviewsPerCompany = dataset.groupBy("company")
         .count()
         .orderBy(desc("count"))

@@ -11,4 +11,4 @@ data class Task(
     val code: TaskCode
 )
 
-typealias TaskCode = (dataset: Dataset<Row>, outputDir: String, logger: Logger) -> Unit
+typealias TaskCode = (dataset: Dataset<Row>, outputDir: String, getColIndex: (String) -> Int, logger: Logger) -> Unit

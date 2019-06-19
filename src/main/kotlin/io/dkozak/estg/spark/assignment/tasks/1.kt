@@ -9,7 +9,7 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions.`when`
 import org.apache.spark.sql.functions.monotonically_increasing_id
 
-val lookupCollection: TaskCode = { dataset, outputDir, logger ->
+val lookupCollection: TaskCode = { dataset, outputDir, _, logger ->
     val companies = prepareCompanyDataset(dataset, outputDir)
         .collectAsList()
         .map { it.getString(0) }

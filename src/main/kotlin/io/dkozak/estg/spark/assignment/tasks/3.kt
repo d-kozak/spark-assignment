@@ -3,7 +3,7 @@ package io.dkozak.estg.spark.assignment.tasks
 import io.dkozak.estg.spark.assignment.TaskCode
 import io.dkozak.estg.spark.assignment.writeCsv
 
-val undersampling: TaskCode = { dataset, outputDir, logger ->
+val undersampling: TaskCode = { dataset, outputDir, _, logger ->
     val reviewsPerCompany = dataset.groupBy("company")
         .count()
         .orderBy("count")

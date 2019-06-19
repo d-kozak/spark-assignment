@@ -3,7 +3,7 @@ package io.dkozak.estg.spark.assignment.tasks
 import io.dkozak.estg.spark.assignment.TaskCode
 import java.io.File
 
-val probabilistic: TaskCode = { dataset, outputDir, logger ->
+val probabilistic: TaskCode = { dataset, outputDir, _, logger ->
     val totalReviews = dataset.count().toDouble()
     val probabilities = dataset.groupBy("company")
         .count()

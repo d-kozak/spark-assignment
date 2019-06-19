@@ -3,7 +3,7 @@ package io.dkozak.estg.spark.assignment.tasks
 import io.dkozak.estg.spark.assignment.TaskCode
 import org.apache.spark.sql.functions.`when`
 
-val discretizing: TaskCode = { dataset, outputDir, logger ->
+val discretizing: TaskCode = { dataset, outputDir, _, logger ->
 
     val col = dataset.col("overall-ratings")
     val columnRule = `when`(col.leq(1), 1)

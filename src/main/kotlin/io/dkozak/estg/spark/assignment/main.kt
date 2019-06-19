@@ -16,7 +16,8 @@ val allTasks = tasks(
     Task(2, "Oversampling", oversampling),
     Task(3, "Undersampling", undersampling),
     Task(4, "Discretizing", discretizing),
-    Task(5, "Probabilistic Analysis", probabilistic)
+    Task(5, "Probabilistic Analysis", probabilistic),
+    Task(9, "Normalization", normalization)
 )
 
 
@@ -52,13 +53,20 @@ fun sparkExecute(block: (SparkSession) -> Unit) {
 fun prepareOutput(outputDir: String, block: (BufferedWriter) -> Unit) =
     File("$outputDir/$LOG_FILE_NAME").bufferedWriter().use(block)
 
-fun Dataset<*>.writeCsv(name: String) = this.coalesce(1)
-    .write()
-    .option("header", true)
-    .csv(name)
+fun Dataset<*>.writeCsv(name: String, join: Boolean = true) {
+    val start = if (join) this.coalesce(1) else this
+    start
+        .write()
+        .option("header", true)
+        .csv(name)
+}
 
 fun main(args: Array<String>) {
     val (inputFile, outputDir, tasks) = handleArguments(args)
+    val getColIndex = loadColIndexes(inputFile)
+
+    getColIndex("overall-ratings")
+
     sparkExecute { spark ->
         prepareOutput(outputDir) { writer ->
             val logger = Logger(writer)
@@ -67,7 +75,7 @@ fun main(args: Array<String>) {
                 val taskOutputDir = "$outputDir/$index"
                 File(taskOutputDir).mkdir() || throw RuntimeException("Could not create output dir $taskOutputDir")
                 logger.task(task.name) {
-                    task.code(dataset, taskOutputDir, logger)
+                    task.code(dataset, taskOutputDir, getColIndex, logger)
                 }
             }
         }
