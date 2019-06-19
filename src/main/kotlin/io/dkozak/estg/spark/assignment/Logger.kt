@@ -28,7 +28,7 @@ class Logger(
     }
 
     fun log(message: String) {
-        val indent = nameStack.map { '\t' }.joinToString()
+        val indent = nameStack.map { '\t' }.joinToString(separator = "")
         writer.write("$indent$message\n")
         println("$indent$message")
     }
