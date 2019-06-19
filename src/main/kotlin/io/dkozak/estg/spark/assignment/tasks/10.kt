@@ -2,31 +2,30 @@ package io.dkozak.estg.spark.assignment.tasks
 
 import io.dkozak.estg.spark.assignment.TaskCode
 import io.dkozak.estg.spark.assignment.writeCsv
-import java.text.ParseException
-import java.text.SimpleDateFormat
-import java.util.*
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 val removeNoise: TaskCode = { dataset, outputDir, getColIndex, logger ->
-
+    val original = dataset.count()
     val dateColIndex = getColIndex("dates")
-    val dateFormat = SimpleDateFormat("MMM dd, yyyy")
-
-    val limit = Date(2010, 1, 1)
+    val limit = LocalDate.of(2017, 1, 1)
 
     val filtered = dataset.filter {
         val dateString = it.getString(dateColIndex).trim()
         try {
-            val date = dateFormat.parse(dateString)
-            val result = date.after(limit) || date >= limit || date.toInstant() >= limit.toInstant()
-            if (date.year > 2010)
-                println("'$dateString','$date', $result")
-            result
+            val dateFormat = DateTimeFormatter.ofPattern("MMM d, yyyy")
+            val date = LocalDate.parse(dateString, dateFormat)
+            date >= limit
 
-        } catch (ex: ParseException) {
+        } catch (ex: DateTimeParseException) {
             false
         }
     }
+    val difference = original - filtered.count()
 
     filtered.show()
     filtered.writeCsv("$outputDir/withoutNoise")
+
+    logger.log("Removed $difference lines")
 }
