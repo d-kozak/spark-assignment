@@ -11,5 +11,7 @@ rm -rf ${OUTPUT_DIR}
 #    gradle jar || exit 1
 #fi
 
-gradle jar && ${SPARK_BIN}/spark-submit --class io.dkozak.estg.spark.assignment.MainKt --master "local[4]" ${JAR_FILE} ${INPUT_FILE} ${OUTPUT_DIR} $1
+gradle jar || exit 1
+
+${SPARK_BIN}/spark-submit --class io.dkozak.estg.spark.assignment.MainKt --master "local[4]" ${JAR_FILE} ${INPUT_FILE} ${OUTPUT_DIR} $1 2>&1 | grep -v "INFO"
 

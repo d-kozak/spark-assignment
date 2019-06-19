@@ -14,7 +14,7 @@ class Logger(
         try {
             block()
         } finally {
-            log("# Finishing section $name")
+            log("# Finishing section $name\n")
         }
     }
 
