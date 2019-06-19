@@ -1,5 +1,6 @@
 package io.dkozak.estg.spark.assignment
 
+import io.dkozak.estg.spark.assignment.tasks.discretizing
 import io.dkozak.estg.spark.assignment.tasks.lookupCollection
 import io.dkozak.estg.spark.assignment.tasks.oversampling
 import io.dkozak.estg.spark.assignment.tasks.undersampling
@@ -16,7 +17,8 @@ const val LOG_FILE_NAME = "log"
 val allTasks = tasks(
     Task(1, "Lookup Collection", lookupCollection),
     Task(2, "Oversampling", oversampling),
-    Task(3, "Undersampling", undersampling)
+    Task(3, "Undersampling", undersampling),
+    Task(4, "Discretizing", discretizing)
 )
 
 
