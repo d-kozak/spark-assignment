@@ -25,7 +25,7 @@ val removeNoise: TaskCode = { dataset, outputDir, getColIndex, logger ->
     val difference = original - filtered.count()
 
     filtered.show()
-    filtered.writeCsv("$outputDir/withoutNoise")
+    filtered.writeCsv("$outputDir/without_noise")
 
     logger.log("Removed $difference lines")
 }

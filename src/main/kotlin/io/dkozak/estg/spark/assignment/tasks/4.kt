@@ -1,6 +1,7 @@
 package io.dkozak.estg.spark.assignment.tasks
 
 import io.dkozak.estg.spark.assignment.TaskCode
+import io.dkozak.estg.spark.assignment.writeCsv
 import org.apache.spark.sql.functions.`when`
 
 val discretizing: TaskCode = { dataset, outputDir, _, logger ->
@@ -12,6 +13,8 @@ val discretizing: TaskCode = { dataset, outputDir, _, logger ->
         .`when`(col.leq(14), 4)
         .otherwise(5)
 
-    dataset.withColumn("overall-ratings", columnRule)
+    val discretized = dataset.withColumn("overall-ratings", columnRule)
+    discretized
         .show()
+    discretized.writeCsv("$outputDir/discretized")
 }
