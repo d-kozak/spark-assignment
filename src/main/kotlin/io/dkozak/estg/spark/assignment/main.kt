@@ -17,6 +17,7 @@ val allTasks = tasks(
     Task(3, "Undersampling", undersampling),
     Task(4, "Discretizing", discretizing),
     Task(5, "Probabilistic Analysis", probabilistic),
+    Task(6, "Tdf - idf", tf_idf),
     Task(7, "Inverted Index", invertedIndex),
     Task(9, "Normalization", normalization),
     Task(10, "Remove noise", removeNoise),
