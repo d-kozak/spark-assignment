@@ -20,6 +20,7 @@ val allTasks = tasks(
     Task(7, "Inverted Index", invertedIndex),
     Task(9, "Normalization", normalization),
     Task(10, "Remove noise", removeNoise),
+    Task(11, "Fill missing values", fillMissing),
     Task(12, "Pivot table", pivotTable)
 )
 
