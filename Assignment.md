@@ -46,8 +46,36 @@ To allow for easier execution, a [shell script](./execute.sh) is prepared. This 
 ## Tasks
 In the section description and solutions for individual tasks will be given
 
-### 1)Lookup collection [code](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/1.kt)
+### 1)[Lookup collection](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/1.kt)
 The goal of this task was to replace one enumeration column in the dataset with a numeric value. The mapping between the numeric value and the original enumeration value
 should be saved in a separate lookup collection.
 
 For this task I decided to replace the company column in the original dataset.
+
+### 2) [Oversampling](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/2.kt)
+
+Since the amount of reviews per company is different, it might be important for some types of analysis to transform the dataset in a way to 
+make sure that all the categories are represented equally. Therefore, for the oversampling task, I decided to even out the amount of reviews per company. 
+I achieved this by inserting some reviews multiple times.
+
+### 3) [Undersampling](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/3.kt)
+As in the case of mongodb, undersampling was easier to implement, because there is a sample operator that 
+takes a randomly selected subset from the dataset. Again, I used undersampling to ensure that the amount of tasks per company is equal.
+
+### 4) [Discretizing](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/4.kt)
+For this task I decided to discretize the overall rating column. Originally it contained values from the interval <0.0,5.0> 
+and transformed it into values from {1,2,3,4,5} by rounding the floating point numbers up to their nearest integer.
+
+### 5) [Probabilistic analysis](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/5.kt)
+For this task I decided to calculate the probabilities of a review belonging to a company. 
+
+### 6) [Tf-idf](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/6.kt)
+As in the mongodb task, I decided to calculate the tf-idf for the word 'work' in the summary column. 
+
+### 7) [Index](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/7.kt)
+Since the column containing longest strings is the summary, I decided to create inverted index for the one.
+It could be used to add search engine capability for the dataset.
+
+### 8) [k-fold cross validation](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/8.kt)
+For this task I decided to split the dataset into 5 datasets to ensure that   
+
