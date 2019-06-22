@@ -5,7 +5,7 @@
 
 The goal of this assignment was to implement 12 data analysis tasks in using [Apache Spark](https://spark.apache.org/).
 The structure of the report is as follows. First, the dataset is introduces. Afterwards follows the description and the solution for each of the tasks. 
-In the end, a conclusion is given.
+
 
 ## Dataset
 As in the first [mongo assignment](https://github.com/d-kozak/mongo-assignment), I chose to use the dataset [employee reviews](https://www.kaggle.com/petersunga/google-amazon-facebook-employee-reviews/version/2),
@@ -77,5 +77,25 @@ Since the column containing longest strings is the summary, I decided to create 
 It could be used to add search engine capability for the dataset.
 
 ### 8) [k-fold cross validation](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/8.kt)
-For this task I decided to split the dataset into 5 datasets to ensure that   
+For this task I decided to split the dataset into 5 disjoint datasets that can be used for example to test
+that a prediction model is not overfitted.
+
+### 9) [Normalization](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/9.kt)
+I decided to normalize the values in overall-ratings, which originally were form the interval <0.0,5.0>. 
+
+### 10) [Remove noise](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/10.kt)
+I decided to remove all reviews that were older than 1.1.2017, because they are outdated and 
+therefore they are less valuable for people deciding where to go now.
+
+### 11) [Fill missing values](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/11.kt)
+Again I encountered the problem that I could not find missing values. However, to fulfil the task, 
+I decided to create a code that would insert average rating into reviews where overall-rating would be missing.
+
+### 12) [Pivot table](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/11.kt)
+For this tasks, I decided to compute the average value per company for the following columns.
+* overall-ratings
+* work-balance-stars
+* culture-values-stars
+* carrer-opportunities-stars  
+  
 
