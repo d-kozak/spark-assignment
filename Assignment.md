@@ -43,10 +43,13 @@ ${SPARK_EXEC} --class io.dkozak.estg.spark.assignment.MainKt \
 * OUTPUT_DIR is a directory into which the output should be written
 
 To allow for easier execution, [execute.sh](./execute.sh) shell script is prepared. This script takes following arguments. 
-* location where ApacheSpark is installed.
+
+* location where ApacheSpark is installed
 * [optional] a single task that should be run (default is all tasks)
 
-The output can be found in the **./output** directory, each task results are stored in a subfolder identified 
+Please note that for this script to work correctly, the input csv file has to be stored at path __./employee_reviews.csv__.
+
+The output can be found in the __./output__ directory, each task results are stored in a subfolder identified 
 by the number of the task.
 
 ## Tasks
