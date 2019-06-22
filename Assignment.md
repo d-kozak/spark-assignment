@@ -4,8 +4,8 @@
 * Email: dkozak94@gmail.com
 
 The goal of this assignment was to implement 12 data analysis tasks using [Apache Spark](https://spark.apache.org/).
-The structure of the report is as follows. First, the dataset is introduced. Afterwards the description and the solution for each of the tasks are given. 
-
+The structure of the report is as follows. First, the dataset is introduced. Afterwards descriptions and solutions 
+for each of the tasks are given. 
 
 ## Dataset
 As in the first [mongo assignment](https://github.com/d-kozak/mongo-assignment), I decided to use the dataset [employee reviews](https://www.kaggle.com/petersunga/google-amazon-facebook-employee-reviews/version/2),
@@ -28,7 +28,7 @@ tail -n 1
 67529,microsoft,none," Dec 14, 2010",Former Employee - Sen ....
 ```
 ## Run the code
-The whole repository is a gradle module with source code written in [Kotlin](http://kotlinlang.org), which can be compiled into jar using the following command.
+The whole repository is a gradle module with source code written in [Kotlin](http://kotlinlang.org). It can be compiled into jar using the following command.
 ```
 gralde jar
 ```
@@ -38,21 +38,21 @@ ${SPARK_EXEC} --class io.dkozak.estg.spark.assignment.MainKt \
 --master "local[4]" ${JAR_FILE} ${INPUT_FILE} ${OUTPUT_DIR}
 ```
 * SPARK_EXEC is the location of the spark-submit file in the bin folder inside the spark directory
-* JAR_FILE is jar build the previous step
+* JAR_FILE is the jar build the previous step
 * INPUT_FILE is a path to the input csv file
 * OUTPUT_DIR is a directory into which the output should be written
 
-To allow for easier execution, a [execute.sh](./execute.sh) shell script is prepared. This script takes one to two arguments. 
+To allow for easier execution, [execute.sh](./execute.sh) shell script is prepared. This script takes one to two arguments. 
 * location where ApacheSpark is installed.
 * [optional] a single task that should be run (default is all tasks)
 
-The output can be found in the ./output directory, each task results are stored in a subfolder identified 
+The output can be found in the **./output** directory, each task results are stored in a subfolder identified 
 by the number of the task.
 
 ## Tasks
 In this section description and solutions for individual tasks will be given
 
-### 1)[Lookup collection](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/1.kt)
+### 1) [Lookup collection](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/1.kt)
 The goal of this task was to replace one enumeration column in the dataset with a numeric value. The mapping between the numeric value and the original enumeration value
 should be saved in a separate lookup collection.
 
@@ -66,23 +66,7 @@ private fun prepareCompanyDataset(
 ): Dataset<Row> {
     val companyDataset = dataset.select("company")
         .distinct()
-        .coalesce(1)
-    companyDataset
-        .withColumn("id", monotonically_increasing_id())
-        .writeCsv("$outputDir/lookup")
-    return companyDataset
-}
-
-val companies = prepareCompanyDataset(dataset, outputDir)
-        .collectAsList()
-        .map { it.getString(0) }
-        .mapIndexed { i, company ->
-            company to i
-        }.toMap()
-```
-Then I used this map to generate a query that replaces the column values in the original dataset with numerical values.
-```
-val companyColumn = dataset.col("company")
+        .coalesce(1) dataset.col("company")
     var whenColumn: Column? = null
     for ((company, id) in companies) {
         whenColumn = if (whenColumn == null) {
@@ -90,10 +74,33 @@ val companyColumn = dataset.col("company")
         } else {
             whenColumn.`when`(companyColumn.equalTo(company), id)
         }
-    }
+    companyDataset
+        .withColumn("id", monotonically_increasing_id())
+        .writeCsv("$outputDir/lookup")
+    return companyDataset
+}
 
-    dataset.withColumn("company", whenColumn)
-        .writeCsv("$outputDir/reviews")
+val companies = prepareCompanyDataset(dataset, outputDir)
+    .collectAsList()
+    .map { it.getString(0) }
+    .mapIndexed { i, company ->
+        company to i
+    }.toMap()
+```
+Then I used this map to generate a query that replaces the column values in the original dataset with numerical values.
+```
+val companyColumn = dataset.col("company")
+var whenColumn: Column? = null
+for ((company, id) in companies) {
+    whenColumn = if (whenColumn == null) {
+        `when`(companyColumn.equalTo(company), id)
+    } else {
+        whenColumn.`when`(companyColumn.equalTo(company), id)
+    }
+}
+
+dataset.withColumn("company", whenColumn)
+    .writeCsv("$outputDir/reviews")
 ```
 
 ### 2) [Oversampling](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/2.kt)
@@ -105,12 +112,12 @@ I achieved this by inserting some reviews multiple times.
 First I calculated how many reviews per company are in the dataset.
 ```
 val reviewsPerCompany = dataset.groupBy("company")
-        .count()
-        .orderBy(desc("count"))
-        .collectAsList()
-        .map { it.getString(0) to it.getLong(1) }
+    .count()
+    .orderBy(desc("count"))
+    .collectAsList()
+    .map { it.getString(0) to it.getLong(1) }
 
-    val (maxCompanyName, max) = reviewsPerCompany[0]
+val (maxCompanyName, max) = reviewsPerCompany[0]
 ```
 Then I used this to compute how many reviews need to be added.
 ```
