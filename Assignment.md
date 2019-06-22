@@ -28,7 +28,7 @@ tail -n 1
 67529,microsoft,none," Dec 14, 2010",Former Employee - Sen ....
 ```
 ## Run the code
-The whole repository is a gradle module with source code written in [Kotlin](http://kotlinlang.org). It can be compiled into jar using the following command.
+The whole repository is a gradle module and the source code is written in [Kotlin](http://kotlinlang.org). It can be compiled into jar using the following command.
 ```
 gralde jar
 ```
@@ -42,7 +42,7 @@ ${SPARK_EXEC} --class io.dkozak.estg.spark.assignment.MainKt \
 * INPUT_FILE is a path to the input csv file
 * OUTPUT_DIR is a directory into which the output should be written
 
-To allow for easier execution, [execute.sh](./execute.sh) shell script is prepared. This script takes one to two arguments. 
+To allow for easier execution, [execute.sh](./execute.sh) shell script is prepared. This script takes following arguments. 
 * location where ApacheSpark is installed.
 * [optional] a single task that should be run (default is all tasks)
 
@@ -128,36 +128,35 @@ val reviewsToAdd = reviewsPerCompany
 In the end I used this information to generate a new bigger dataset in which all companies are represented equally.
 ```
 var result = dataset.where(dataset.col("company").equalTo(maxCompanyName))
-    for ((name, count, toAdd) in reviewsToAdd) {
-        logger.task("Oversampling on $name") {
-            val reviewsForCompany = dataset.where(dataset.col("company").equalTo(name))
+for ((name, count, toAdd) in reviewsToAdd) {
+    logger.task("Oversampling on $name") {
+        val reviewsForCompany = dataset.where(dataset.col("company").equalTo(name))
 
-            var buffer = reviewsForCompany
-            val fullIterations = toAdd / count
-            val reminder = toAdd % count
-            val percentage = reminder.toDouble() / count
-            logger.log("Need $fullIterations full iterations and another $percentage in the last one")
-            for (i in 0 until fullIterations) {
-                buffer = buffer.union(reviewsForCompany)
-            }
-            if (reminder > 0) {
-                val subset = reviewsForCompany.sample(percentage)
-                buffer = buffer.union(subset)
-            }
-
-            logger.log("Final review count for $name is ${buffer.count()}")
-            result = result.union(buffer)
+        var buffer = reviewsForCompany
+        val fullIterations = toAdd / count
+        val reminder = toAdd % count
+        val percentage = reminder.toDouble() / count
+        logger.log("Need $fullIterations full iterations and another $percentage in the last one")
+        for (i in 0 until fullIterations) {
+            buffer = buffer.union(reviewsForCompany)
         }
+        if (reminder > 0) {
+            val subset = reviewsForCompany.sample(percentage)
+            buffer = buffer.union(subset)
+        }
+
+        logger.log("Final review count for $name is ${buffer.count()}")
+        result = result.union(buffer)
     }
+}
 ```
 
 ### 3) [Undersampling](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/3.kt)
 As in the case of mongodb, undersampling was easier to implement, because there is a sample operator that 
 takes a randomly selected subset from the dataset. Again, I used undersampling to ensure that the amount of tasks per company is equal.
 
-The initial procedures were almost the same as the previous task, expect that I wanted to find out the company
+The initial procedures were almost the same as the previous task, except that I wanted to find out the company
 with lowest amount of reviews, so that I could sample the reviews from other companies accordingly.
-For that, the sample operator can be used
 ```
 var result = dataset.where(dataset.col("company").equalTo(minCompanyName))
 for ((companyName, percentage) in percentagePerCompany) {
@@ -168,16 +167,16 @@ for ((companyName, percentage) in percentagePerCompany) {
 ```
 ### 4) [Discretizing](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/4.kt)
 For this task I decided to discretize the overall rating column. Originally it contained values from the interval <0.0,5.0> 
-and transformed it into values from {1,2,3,4,5} by rounding the floating point numbers up to their nearest integer.
+and I transformed it into values from {1,2,3,4,5} by rounding the floating point numbers up to their nearest integer.
 ```
 val col = dataset.col("overall-ratings")
-    val columnRule = `when`(col.leq(1), 1)
-        .`when`(col.leq(2), 2)
-        .`when`(col.leq(3), 3)
-        .`when`(col.leq(14), 4)
-        .otherwise(5)
+val columnRule = `when`(col.leq(1), 1)
+    .`when`(col.leq(2), 2)
+    .`when`(col.leq(3), 3)
+    .`when`(col.leq(14), 4)
+    .otherwise(5)
 
-    val discretized = dataset.withColumn("overall-ratings", columnRule)
+val discretized = dataset.withColumn("overall-ratings", columnRule)
 ```
 
 ### 5) [Probabilistic analysis](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/5.kt)
@@ -225,10 +224,9 @@ val idfCalc = object : Function1<Row, Double>, Serializable {
 val tf_idf = dataset.map(idfCalc, Encoders.DOUBLE())
 ```
 ### 7) [Index](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/7.kt)
-Since the column containing longest strings is the summary, I decided to create inverted index for the one.
-It could be used to add search engine capability for the dataset.
+Since the column containing longest strings is the summary, I decided to create inverted index for this one.
 
-First, I transformed documents into tuples, where first element is a word a the second element is a documentId of 
+First, I transformed documents into tuples, where the first element is a word and the second element is a documentId of 
 a document, where this word can be found.
 ```
 val getText = object : FlatMapFunction<Row, Tuple2<String, String>>, Serializable {
@@ -246,10 +244,6 @@ val getText = object : FlatMapFunction<Row, Tuple2<String, String>>, Serializabl
             override fun hasNext(): Boolean = i < text.size
 
             override fun next(): Tuple2<String, String> = text[i++]
-
-            override fun remove() {
-                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-            }
         }
     }
 }
@@ -272,11 +266,10 @@ val foldSize = (dataset.count() / k).toInt()
 
 for (i in 0 until k) {
     val start = i * foldSize
-    val end = (i + 1) * foldSize
 
     val rows = dataset
         .where(dataset.col("id").`$greater$eq`(start))
-        .limit(end)
+        .limit(foldSize)
 
     rows.show()
     rows.writeCsv("$outputDir/fold_$i")
@@ -307,7 +300,7 @@ val joined = dataset
 ```
 ### 10) [Remove noise](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/10.kt)
 I decided to remove all reviews that were older than 1.1.2017, because they are outdated and 
-therefore they are less valuable for people deciding where to go now.
+therefore they are less valuable for people deciding in which company to go now.
 
 ```
 val filtered = dataset.filter {
@@ -316,7 +309,6 @@ val filtered = dataset.filter {
         val dateFormat = DateTimeFormatter.ofPattern("MMM d, yyyy")
         val date = LocalDate.parse(dateString, dateFormat)
         date >= limit
-
     } catch (ex: DateTimeParseException) {
         false
     }
@@ -342,7 +334,6 @@ For this tasks, I decided to compute the average value per company for the follo
 * work-balance-stars
 * culture-values-stars
 * carrer-opportunities-stars
-  
 ```
 val pivot = dataset
     .groupBy("company")
