@@ -62,7 +62,7 @@ should be saved in a separate lookup collection.
 For this task I decided to replace the company column in the original dataset.
 
 First I created the lookup collection, saved it and loaded it into map.
-```
+```kotlin
 private fun prepareCompanyDataset(
     dataset: Dataset<Row>,
     outputDir: String
@@ -91,7 +91,7 @@ val companies = prepareCompanyDataset(dataset, outputDir)
     }.toMap()
 ```
 Then I used this map to generate a query that replaces the column values in the original dataset with numerical values.
-```
+```kotlin
 val companyColumn = dataset.col("company")
 var whenColumn: Column? = null
 for ((company, id) in companies) {
@@ -113,7 +113,7 @@ make sure that all the categories are represented equally. Therefore, for the ov
 I achieved this by inserting some reviews multiple times.
 
 First I calculated how many reviews per company are in the dataset.
-```
+```kotlin
 val reviewsPerCompany = dataset.groupBy("company")
     .count()
     .orderBy(desc("count"))
@@ -123,13 +123,13 @@ val reviewsPerCompany = dataset.groupBy("company")
 val (maxCompanyName, max) = reviewsPerCompany[0]
 ```
 Then I used this to compute how many reviews need to be added.
-```
+```kotlin
 val reviewsToAdd = reviewsPerCompany
         .filter { (name, _) -> name != maxCompanyName }
         .map { (name, count) -> Triple(name, count, max - count) }
 ```
 In the end I used this information to generate a new bigger dataset in which all companies are represented equally.
-```
+```kotlin
 var result = dataset.where(dataset.col("company").equalTo(maxCompanyName))
 for ((name, count, toAdd) in reviewsToAdd) {
     logger.task("Oversampling on $name") {
@@ -160,7 +160,7 @@ takes a randomly selected subset from the dataset. Again, I used undersampling t
 
 The initial procedures were almost the same as the previous task, except that I wanted to find out the company
 with lowest amount of reviews, so that I could sample the reviews from other companies accordingly.
-```
+```kotlin
 var result = dataset.where(dataset.col("company").equalTo(minCompanyName))
 for ((companyName, percentage) in percentagePerCompany) {
     val sampled = dataset.where(dataset.col("company").equalTo(companyName))
@@ -171,7 +171,7 @@ for ((companyName, percentage) in percentagePerCompany) {
 ### 4) [Discretizing](./src/main/kotlin/io/dkozak/estg/spark/assignment/tasks/4.kt)
 For this task I decided to discretize the overall rating column. Originally it contained values from the interval <0.0,5.0> 
 and I transformed it into values from {1,2,3,4,5} by rounding the floating point numbers up to their nearest integer.
-```
+```kotlin
 val col = dataset.col("overall-ratings")
 val columnRule = `when`(col.leq(1), 1)
     .`when`(col.leq(2), 2)
@@ -186,7 +186,7 @@ val discretized = dataset.withColumn("overall-ratings", columnRule)
 For this task I decided to calculate the probabilities of a review belonging to a company. For that I counted 
 how many reviews are in the whole dataset and then for each company I divided the amount of it's review by the amount
 of all reviews.
-```
+```kotlin
 val totalReviews = dataset.count().toDouble()
 val probabilities = dataset.groupBy("company")
     .count()
@@ -199,7 +199,7 @@ val probabilities = dataset.groupBy("company")
 As in the mongodb task, I decided to calculate the tf-idf for the word 'work' in the summary column. 
 
 First, I had to count how many documents contain that word.
-```
+```kotlin
 val containsWord = object : Function1<Row, Int>, Serializable {
         override fun apply(it: Row): Int {
             return if ((it.getString(summaryIndex) ?: "").contains(" $word ")) 1 else 0
@@ -210,11 +210,11 @@ val count = dataset.map(containsWord, Encoders.INT())
     .agg(sum("value")).collectAsList()[0].getLong(0).toDouble()
 ```
 From that, I could compute idf.
-```
+```kotlin
 val idf = Math.log(dataset.count() / count)
 ```
 Afterwards, I computed tf-idf for each document.
-```
+```kotlin
 val idfCalc = object : Function1<Row, Double>, Serializable {
     override fun apply(it: Row): Double {
         val words = (it.getString(summaryIndex) ?: "").split(" ")
@@ -231,7 +231,7 @@ Since the column containing longest strings is the summary, I decided to create 
 
 First, I transformed documents into tuples, where the first element is a word and the second element is a documentId of 
 a document, where this word can be found.
-```
+```kotlin
 val getText = object : FlatMapFunction<Row, Tuple2<String, String>>, Serializable {
 
     override fun call(it: Row): MutableIterator<Tuple2<String, String>> {
@@ -252,7 +252,7 @@ val getText = object : FlatMapFunction<Row, Tuple2<String, String>>, Serializabl
 }
 ```
 Then I grouped them by the first column, that is the word, merging all the document ids together.
-```
+```kotlin
 val result = dataset.flatMap(getText, Encoders.tuple(Encoders.STRING(), Encoders.STRING()))
     .groupBy("_1")
     .agg(functions.concat_ws(" ", collect_list("_2")))
@@ -264,7 +264,7 @@ For this task I decided to split the dataset into 5 disjoint datasets that can b
 that a prediction model is not overfitted.
 
 For that I iterated over the original dataset and sliced it.
-```
+```kotlin
 val foldSize = (dataset.count() / k).toInt()   
 
 for (i in 0 until k) {
@@ -283,7 +283,7 @@ for (i in 0 until k) {
 I decided to normalize the values in overall-ratings, which originally were form the interval <0.0,5.0>. 
 
 First I calculated new values in a temporal dataset.
-```
+```kotlin
 val normalizationFunction = object : Function1<Row, Double>, Serializable {
     override fun apply(it: Row): Double {
         val rating = it.getString(colIndex).toDoubleOrNull()
@@ -296,7 +296,7 @@ val resultCol = dataset.map(normalizationFunction, Encoders.DOUBLE())
     .withColumn("id", functions.monotonically_increasing_id())
 ```
 Then I merged it back to the original one.
-```
+```kotlin
 val joined = dataset
         .drop("overall-ratings")
         .join(resultCol, "id")
@@ -305,7 +305,7 @@ val joined = dataset
 I decided to remove all reviews that were older than 1.1.2017, because they are outdated and 
 therefore they are less valuable for people deciding in which company to go now.
 
-```
+```kotlin
 val filtered = dataset.filter {
     val dateString = it.getString(dateColIndex).trim()
     try {
@@ -321,7 +321,7 @@ val filtered = dataset.filter {
 Again I encountered the problem that I could not find missing values. However, to fulfil the task, 
 I decided to create a code that would insert average rating into reviews where overall-rating would be missing.
 
-```
+```kotlin
 val avgRating = dataset.agg(avg("overall-ratings"))
     .collectAsList()[0]
     .getDouble(0)
@@ -337,7 +337,7 @@ For this tasks, I decided to compute the average value per company for the follo
 * work-balance-stars
 * culture-values-stars
 * carrer-opportunities-stars
-```
+```kotlin
 val pivot = dataset
     .groupBy("company")
     .agg(
