@@ -25,6 +25,24 @@ tail -n 1
 ```
 67529,microsoft,none," Dec 14, 2010",Former Employee - Sen ....
 ```
+## Run the code
+The whole repository is gradle module with source code written in [Kotlin](http://kotlinlang.org), which can be compiled into jar using the following command.
+```
+gralde jar
+```
+This jar can then be submitted to locally installed apache spark instance.
+```
+${SPARK_EXEC} --class io.dkozak.estg.spark.assignment.MainKt --master "local[4]" ${JAR_FILE} ${INPUT_FILE} ${OUTPUT_DIR}
+```
+* SPARK_EXEC is the location of the spark-submit file in the bin folder inside the spark directory
+* JAR_FILE is jar build the previous step
+* INPUT_FILE is a path to the input csv file
+* OUTPUT_DIR is a directory into which the output should be written
+
+To allow for easier execution, a [shell script](./execute.sh) is prepared. This script takes one to two arguments. 
+* location where ApacheSpark is installed.
+* [optional] a single task that should be run (default is all tasks)
+
 ## Tasks
 In the section description and solutions for individual tasks will be given
 
